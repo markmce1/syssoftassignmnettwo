@@ -6,16 +6,14 @@
 #include<arpa/inet.h>
 #include<unistd.h>
 #include<ctype.h>
+#include<pwd.h>
 
 int main(int argc, char *argv[])
 {
     int SID;
-    uid_t uid = getuid();
+    gid_t uid = getuid();
     gid_t gid = getgid();
 
-    printf("%d\n", uid); 
-
-    printf("%d\n", gid); 
 
     struct sockaddr_in server;
     //Create socket
@@ -39,19 +37,27 @@ int main(int argc, char *argv[])
     }
 
     printf("connected to server ok\n");
-    char root[] ="Root/"; //remove name root as it will need to be in the root directory
-    char sales[] = "Sales/";
-    char promotions[] ="Promotions/";
-    char offers[] = "Offers/";
-    char marketing[] ="Marketing/";
+    char root[] =" Root/"; //remove name root as it will need to be in the root directory
+    char sales[] = " Sales/";
+    char promotions[] =" Promotions/";
+    char offers[] = " Offers/";
+    char marketing[] =" Marketing/";
     ///sending file craic
     FILE *f;
     int words =0;
     char buffer[1024];
     char c;
+    char cuid[5];
+    char cgid[5];
+    sprintf(cuid,"%d",uid);
+    sprintf(cgid,"%d",gid);
+
+    printf("\nthis is gid: %s",cgid);
+    printf("\nthis is uid: %s\n",cuid);
+
     int serverpath;
-    char enteredfilename[200];
-    char file_name[300];
+    char enteredfilename[255];
+    char file_name[255];
     printf("Whats the file name?\n");
     scanf("%s", enteredfilename);
     
@@ -92,29 +98,13 @@ int main(int argc, char *argv[])
 
 
 
-    f = fopen(enteredfilename, "r");//r just means we are reading it
-    while((c = getc(f))!= EOF)
-    {
-        fscanf(f, "%s", buffer);
-        if(isspace(c) || c=='\t')
-        words++;
-    }
-    write(SID, uid, sizeof(uid_t));
-    write(SID, gid, sizeof(gid_t));
+    write(SID, cuid, 5);
+    write(SID, cgid, 5);
     write(SID, file_name, 255);
+    write(SID, enteredfilename ,255);
     write(SID, &words, sizeof(int));
-    rewind(f);
-
-    char ch;
-    while (ch != EOF)
-    {
-        fscanf(f, "%s", buffer);
-        write(SID, buffer,255);
-        ch = fgetc(f);
-    }
 
     printf("The file has been successfully sent");
-
     close(SID);
     return 0;
 } 

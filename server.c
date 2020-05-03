@@ -5,6 +5,8 @@
 #include<arpa/inet.h>
 #include<unistd.h>
 #include<pthread.h>
+
+
 pthread_mutex_t locker;
 int main(int argc, char *argv[])
 {
@@ -55,58 +57,61 @@ int main(int argc, char *argv[])
         printf("connection from client accepted\n");
     }
     pthread_mutex_lock(&locker);
+
     //receieving files
     FILE *fp;
-    uid_t uid;
-    int myUID =1001;
-    gid_t gid;
-    int i = 1005;
+    int myUID =0; 
+    char cuid[5];
+    char cgid[5];
     int ch =0;
     char buffer[1024];
-    char file_name[300];
-    //somehow read in file_name
-    read(cs, file_name, 255);
+    char file_name[255];
+    char enteredfilename[255]; 
+    read(cs, cuid, 5);//take in from client 1
+    read(cs, cgid, 5);//2
+    read(cs, file_name, 255);//3
+    read(cs,enteredfilename,255);//4
     fp = fopen(file_name, "a");
-    int words;
-    read(cs, uid, sizeof(uid_t));//take in from client
 
-    read(cs, gid, sizeof(gid_t));
-    int geid, ueid;
-    setreuid(myUID, uid);
+    uid_t gid,uid;
 
-    /*if(setreuid(myUID, uid)<0){
-        printf("cannot change reuid");
-        return 1;
-    }
-    if(setregid(myUID,gid)<0)
+    printf("\nthis is gid: %s",cgid);
+    printf("\nthis is uid: %s\n",cuid);
+
+    uid = atoi(cuid);
+    gid = atoi(cgid);
+
+    if(setregid(gid,myUID)<0)
     {
-        printf("cannot change regid");
-        return 1;
+        printf("%s: cannot change euid\n");
     }
-    if(seteuid(i)<0)
-    {
-        printf("cannot change euid");
-        return 1; 
-    }
-    if(setegid(i)<0){
-        printf("cannot change euid");
-        return 1;
-    }*/
 
-    printf("%d\n", uid);
-    printf("%d\n", gid);    
-    geid = getegid();
-    ueid = geteuid();
-    printf("%d\n", ueid);
-    printf("%d\n", geid);
-    read(cs, &words, sizeof(int));
-
-    while(ch !=words)
+    if(setegid(gid)<0)
     {
-        read(cs, buffer, 255);
-        fprintf(fp, "%s", buffer);
-        ch++;
+        printf("%s: cannot change euid\n");
     }
+
+    if(setreuid(uid, myUID)<0)
+    {
+        printf("%s: cannot change euid\n");
+    }
+    if(seteuid(uid)<0)    
+    {
+        printf("%s: cannot change euid\n");
+    }
+    
+
+    int i;
+    i = getegid();
+    printf("\nthis is gid: %d",i);
+    i=geteuid();
+    printf("\nthis is uid: %d\n",i);
+    
+
+    char st[255] = "cp ";
+    strcat(st, enteredfilename);
+    strcat(st,file_name);
+    system(st);
     printf("The file has been received\n");
     pthread_mutex_unlock(&locker);
     close(cs);

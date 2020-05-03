@@ -8,8 +8,11 @@
 
 
 pthread_mutex_t locker;
+
 int main(int argc, char *argv[])
 {
+    int iret1;
+    //pthread_t thread1;
     int s;
     int cs;
     int connSize;
@@ -50,20 +53,32 @@ int main(int argc, char *argv[])
     cs = accept(s,(struct sockaddr *)&client, (socklen_t*)&connSize);
     if ( cs < 0)
     {
-        perror("can't establish connection\n");
+        perror("can't establish connection");
         return 1;
     }
     else{
-        printf("connection from client accepted\n");
+        printf("connection from client accepted");
     }
-    pthread_mutex_lock(&locker);
+    //my attempt at multi threading
+    /*while((cs = accept(s,(struct sockaddr *)&client, (socklen_t*)&connSize))){
+        puts("Connection accepted");
+        if(pthread_create(&thread1, NULL, filereceiver, (void*) &cs)<0){
+            perror("could not create thread");
+            return 1;
+        }
+        else {
+            printf("success");
+        }
+        pthread_join(thread1, NULL);
+        puts("Handler assigned");
+    }*/
+     pthread_mutex_lock(&locker);
 
     //receieving files
     FILE *fp;
     int myUID =0; 
     char cuid[5];
     char cgid[5];
-    int ch =0;
     char buffer[1024];
     char file_name[255];
     char enteredfilename[255]; 
@@ -114,9 +129,11 @@ int main(int argc, char *argv[])
     system(st);
     printf("The file has been received\n");
     pthread_mutex_unlock(&locker);
+
     close(cs);
     close(s);
 
+   
     if(READSIZE ==0)
     {
         puts("Client disconnected\n");
